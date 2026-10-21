@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator budżetu na ratę</title>
+<style>
+:root{--navy:#183153;--blue:#2457c5;--pale:#edf3ff;--line:#d9e2ef;--muted:#53657c;--green:#176b4d;--red:#a52a2a}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f7fb;color:#192b45;font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 14px 44px}
+.hero{background:linear-gradient(135deg,#14253d,#2d5790);color:#fff;border-radius:18px;padding:24px;margin-bottom:16px}
+.hero h1{font-size:clamp(25px,5vw,36px);line-height:1.15;margin:6px 0 8px}
+.hero p{margin:0;color:#e3ebf7}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+h2{font-size:19px;margin:0 0 14px}
+.field{margin:0 0 14px}
+label{display:block;font-weight:650;margin-bottom:5px}
+input,select{width:100%;font:inherit;border:1px solid #bac8da;border-radius:9px;padding:10px 11px;background:white;color:#192b45}
+input:focus,select:focus{outline:2px solid #8fb4ff;border-color:#2457c5}
+.hint{font-size:13px;color:var(--muted);margin-top:5px}
+.checkrow{display:flex;align-items:flex-start;gap:9px}
+.checkrow input{width:auto;margin-top:6px}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric{padding:13px;border:1px solid var(--line);border-radius:12px;background:#fbfcff;min-width:0}
+.metric span{display:block;color:var(--muted);font-size:13px}
+.metric strong{display:block;font-size:clamp(18px,3vw,23px);overflow-wrap:anywhere;margin-top:3px}
+.status{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}
+.status p{margin:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{font:inherit;font-weight:650;border:0;border-radius:10px;padding:11px 15px;cursor:pointer}
+.primary{background:var(--blue);color:#fff}
+.secondary{background:#e9eef7;color:#183153}
+.disclaimer{font-size:12px;color:var(--muted);margin-top:14px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.hero{padding:20px}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">Bezpłatna symulacja</div>
+<h1>Sprawdź, jaka rata może pasować do Twojego budżetu</h1>
+<p>Wprowadź dochody, skład gospodarstwa domowego i zobowiązania. Wynik jest orientacyjny i nie stanowi decyzji kredytowej.</p>
+</section>
+<div class="grid">
+<section class="card">
+<h2>1. Dochody i gospodarstwo domowe</h2>
+<div class="field"><label for="income">Miesięczny dochód netto gospodarstwa (zł)</label><input id="income" type="number" min="0" step="100" value="13000"></div>
+<div class="field"><label for="people">Liczba osób w gospodarstwie domowym</label><select id="people">
+<option value="1">1 osoba</option><option value="2">2 osoby</option><option value="3">3 osoby</option><option value="4" selected>4 osoby</option><option value="5">5 osób</option><option value="6">6 osób</option><option value="7">7 osób</option><option value="8">8 osób</option><option value="9">9 osób</option><option value="10">10 osób</option>
+</select><div class="hint">Koszty utrzymania zostaną oszacowane automatycznie. Możesz je później zmienić.</div></div>
+<div class="field"><label for="costs">Miesięczne koszty utrzymania (zł)</label><input id="costs" type="number" min="0" step="100" value="5800"><div class="hint">1 osoba: 1 900 zł; 2 osoby: 3 200 zł; 3 osoby: 4 500 zł; 4 osoby: 5 800 zł; każda kolejna osoba: +1 300 zł.</div></div>
+<div class="field"><label for="ages">Wiek dzieci (w latach)</label><input id="ages" type="text" placeholder="Np. 4, 10, 17"><div class="hint">Wpisz wiek każdego dziecka, oddzielając go przecinkiem. Dzieci, które ukończyły 18 lat, nie są liczone do 800+.</div></div>
+<div class="field checkrow"><input id="useBenefit" type="checkbox" checked><div><label for="useBenefit">Uwzględnij 800+ w dochodzie</label><div class="hint">W tej symulacji 800+ obniża szacowane koszty utrzymania o 800 zł na każde dziecko poniżej 18 lat. Okres kredytowania może być skrócony do czasu pozostałego do 18. urodzin dziecka, jeśli świadczenie przestanie przysługiwać wcześniej.</div></div></div>
+</section>
+<section class="card">
+<h2>2. Zobowiązania i parametry kredytu</h2>
+<div class="field"><label for="debts">Obecne miesięczne raty i zobowiązania (zł)</label><input id="debts" type="number" min="0" step="50" value="700"></div>
+<div class="field"><label for="amount">Kwota kredytu do sprawdzenia (zł)</label><input id="amount" type="number" min="0" step="1000" value="100000"></div>
+<div class="field"><label for="rate">Oprocentowanie zmienne przyjęte do symulacji (%)</label><input id="rate" type="number" min="0" max="100" step="0.01" value="9.89"></div>
+<div class="field"><label for="months">Wnioskowany okres (miesiące)</label><select id="months"><option value="12">12 miesięcy</option><option value="24">24 miesiące</option><option value="36">36 miesięcy</option><option value="48">48 miesięcy</option><option value="60">60 miesięcy</option><option value="72">72 miesiące</option><option value="84">84 miesiące</option><option value="96">96 miesięcy</option><option value="108">108 miesięcy</option><option value="120" selected>120 miesięcy</option></select></div>
+<div class="hint">To założona wartość oprocentowania na potrzeby symulacji. Rata może zmieniać się w przyszłości wraz ze zmianą oprocentowania. Kalkulator nie prognozuje przyszłych zmian stóp.</div>
+<div class="actions"><button class="primary" id="calculate" type="button">Przelicz symulację</button><button class="secondary" id="reset" type="button">Przywróć przykładowe dane</button></div>
+</section>
+<section class="card">
+<h2>3. Wynik symulacji</h2>
+<div class="results">
+<div class="metric"><span>Szacowane koszty utrzymania</span><strong id="outCosts">—</strong></div>
+<div class="metric"><span>800+ obniżające koszty</span><strong id="outBenefit">—</strong></div>
+<div class="metric"><span>Szacunkowa maksymalna nowa rata</span><strong id="outCapacity">—</strong></div>
+<div class="metric"><span>Łączne raty po zaciągnięciu kredytu</span><strong id="outAllDebts">—</strong></div>
+<div class="metric"><span>Okres użyty w symulacji</span><strong id="outMonths">—</strong></div>
+<div class="metric"><span>Szacowana rata kredytu</span><strong id="outPayment">—</strong></div>
+<div class="metric"><span>Budżet po odjęciu nowej raty</span><strong id="outRemaining">—</strong></div>
+<div class="metric"><span>Łączna kwota do spłaty (nowy kredyt)</span><strong id="outTotal">—</strong></div>
+<div class="metric"><span>Szacowane odsetki</span><strong id="outInterest">—</strong></div>
+</div>
+<div class="status"><p id="message" aria-live="polite">Wpisz dane i wybierz „Przelicz symulację”.</p></div>
+<p class="disclaimer">To uproszczona symulacja edukacyjna, a nie ocena zdolności kredytowej ani oferta banku. Zasady uwzględniania świadczeń i okresu kredytowania zależą od banku. Rata wyliczana jest przy założeniu równych rat i niezmienności wpisanego oprocentowania przez cały wybrany okres. Wynik nie jest ofertą kredytową ani wyliczeniem RRSO.</p>
+</section>
+</div>
+
+<section class="card" style="margin-top:16px">
+  <h2>Chcesz uzyskać dokładniejsze wyliczenia?</h2>
+  <p style="margin:0 0 12px">Napisz do mnie — pomogę przeanalizować Twoją sytuację i przygotować dokładniejsze wyliczenie.</p>
+  <p style="margin:0 0 6px"><strong>Sławomir Wołowicz</strong></p>
+  <p style="margin:0 0 14px"><strong>Telefon:</strong> <a href="tel:+48530038742" style="color:#2457c5;font-weight:700;text-decoration:none">530 038 742</a></p>
+  <a href="https://wa.me/48530038742?text=Dzie%C5%84%20dobry%2C%20skorzysta%C5%82em%20z%20kalkulatora%20i%20chcia%C5%82bym%20uzyska%C4%87%20dok%C5%82adniejsze%20wyliczenie%20mo%C5%BCliwo%C5%9Bci%20kredytowych." target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 16px;border-radius:10px;background:#25D366;color:#fff;text-decoration:none;font-weight:700">
+    <span aria-hidden="true" style="font-size:20px">☏</span> Napisz na WhatsApp
+  </a>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const el = id => document.getElementById(id);
+const money = n => Number.isFinite(n) ? n.toLocaleString("pl-PL",{style:"currency",currency:"PLN",minimumFractionDigits:2,maximumFractionDigits:2}) : "—";
+function costForPeople(n){
+  if(n===1) return 1900;
+  if(n===2) return 3200;
+  if(n===3) return 4500;
+  return 5800 + Math.max(0,n-4)*1300;
+}
+function parseAges(raw){
+  if(!raw.trim()) return [];
+  return raw.split(/[,;\\s]+/).map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>Number.isFinite(n)&&n>=0&&n<100);
+}
+function calculate(){
+  const incomeBase = Math.max(0, Number(el("income").value)||0);
+  const people = Math.max(1, Number(el("people").value)||1);
+  const costs = Math.max(0, Number(el("costs").value)||0);
+  const debts = Math.max(0, Number(el("debts").value)||0);
+  const amount = Math.max(0, Number(el("amount").value)||0);
+  const annualRate = Math.max(0, Number(el("rate").value)||0);
+  const requestedMonths = Math.max(1, Number(el("months").value)||120);
+  const ages = parseAges(el("ages").value);
+  const eligibleAges = ages.filter(age=>age<18);
+  const benefit = el("useBenefit").checked ? eligibleAges.length*800 : 0;
+  const income = incomeBase;
+  let months = requestedMonths;
+  let termShortened = false;
+  if(el("useBenefit").checked && eligibleAges.length){
+    const remainingMonths = Math.min(...eligibleAges.map(age=>Math.max(1,Math.ceil((18-age)*12))));
+    if(remainingMonths < months){ months = remainingMonths; termShortened = true; }
+  }
+  const r = annualRate/1200;
+  const payment = amount===0 ? 0 : (r===0 ? amount/months : amount*r/(1-Math.pow(1+r,-months)));
+  const dtiLimit = incomeBase*0.65; // Internal affordability cap: 65% of regular declared net income; deliberately not displayed.
+  const dtiRoom = Math.max(0,dtiLimit-debts);
+  const adjustedCosts = Math.max(0,costs-benefit);
+  const budgetRoom = incomeBase-adjustedCosts-debts;
+  const capacity = Math.max(0,Math.min(dtiRoom,budgetRoom));
+  const remaining = capacity-payment;
+  const total = payment*months;
+  el("outCosts").textContent = money(costs);
+  el("outBenefit").textContent = money(benefit);
+  el("outCapacity").textContent = money(capacity);
+  el("outAllDebts").textContent = money(debts+payment);
+  el("outMonths").textContent = months+" mies."+(termShortened?" (skrócony)":"");
+  el("outPayment").textContent = money(payment);
+  el("outRemaining").textContent = money(remaining);
+  el("outTotal").textContent = money(total);
+  el("outInterest").textContent = money(total-amount);
+  let message;
+  if(budgetRoom<=0) message="Po odjęciu szacowanych kosztów utrzymania po uwzględnieniu 800+ i obecnych zobowiązań nie pozostaje wolny budżet na nową ratę.";
+  else if(dtiRoom<=0) message="Na podstawie podanych danych nie ma wystarczającego marginesu na kolejną ratę.";
+  else if(payment<=capacity) message="Rata mieści się w szacowanym bezpiecznym budżecie po uwzględnieniu kosztów utrzymania i 800+. Nie oznacza to potwierdzenia zdolności kredytowej.";
+  else message="Rata przekracza szacowany bezpieczny budżet. Sprawdź niższą kwotę kredytu lub inny okres.";
+  if(termShortened) message += " Okres skrócono, ponieważ uwzględniane 800+ przestanie przysługiwać wcześniej.";
+  el("message").textContent = message;
+}
+el("people").addEventListener("change",function(){el("costs").value=String(costForPeople(Number(this.value)||1));calculate();});
+el("calculate").addEventListener("click",calculate);
+el("reset").addEventListener("click",function(){
+  el("income").value="13000";el("people").value="4";el("costs").value="5800";el("ages").value="";el("useBenefit").checked=true;
+  el("debts").value="700";el("amount").value="100000";el("rate").value="9.89";el("months").value="120";calculate();
+});
+["income","costs","ages","debts","amount","rate","months","useBenefit"].forEach(id=>el(id).addEventListener("input",calculate));
+calculate();
+})();
+</script>
+</body>
+</html>
